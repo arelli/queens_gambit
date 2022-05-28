@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="TUC-Chess-AI2022/TUC-Chess-AI22/src"/>
+	<classpathentry kind="src" path="TUC-Chess-AI2022/TUC-ChessClient-AI22/src"/>
+	<classpathentry kind="lib" path="TUC-Chess-AI2022/tuc-chess-client.jar"/>
+	<classpathentry kind="lib" path="TUC-Chess-AI2022/tuc-chess-server.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
