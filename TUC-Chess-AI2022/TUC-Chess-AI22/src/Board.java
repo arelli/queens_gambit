@@ -52,7 +52,7 @@ public class Board extends JFrame
 		// setting features of the JFrame
 		this.setContentPane(totalPanel);
 		this.setBounds(140, 0, 550, 700);
-		ImageIcon img = new ImageIcon("chess/chessimage.jpg");
+		ImageIcon img = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\chessimage.jpg");
 		this.setIconImage(img.getImage());
 		this.setVisible(true);
 		this.setTitle("TUC-Chess");	
@@ -75,8 +75,8 @@ public class Board extends JFrame
 		gbc.insets = new Insets(1,1,1,1);
 		gbc.fill = GridBagConstraints.BOTH;
 		
-		ImageIcon iconWhite = new ImageIcon("chess/white.gif");
-		ImageIcon iconBlack = new ImageIcon("chess/black.gif");
+		ImageIcon iconWhite = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\white.gif");
+		ImageIcon iconBlack = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\black.gif");
 		
 		for(int i=0; i<rows; i++)
 			for(int j=0; j<columns; j++)
@@ -124,9 +124,9 @@ public class Board extends JFrame
 	private void setChessParts()
 	{
 		// setting the white ChessParts
-		ImageIcon whitePawn = new ImageIcon("chess/pawn_white.gif");
-		ImageIcon whiteRook = new ImageIcon("chess/rook_white.gif");
-		ImageIcon whiteKing = new ImageIcon("chess/king_white.gif");
+		ImageIcon whitePawn = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\pawn_white.gif");
+		ImageIcon whiteRook = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\rook_white.gif");
+		ImageIcon whiteKing = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\king_white.gif");
 		
 		// creating the white pawns
 		for(int j=0; j<columns; j++)
@@ -153,9 +153,9 @@ public class Board extends JFrame
 		//-------------------------------------------------------------
 		
 		// setting the black ChessParts
-		ImageIcon blackPawn = new ImageIcon("chess/pawn_black.gif");
-		ImageIcon blackRook = new ImageIcon("chess/rook_black.gif");
-		ImageIcon blackKing = new ImageIcon("chess/king_black.gif");
+		ImageIcon blackPawn = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\pawn_black.gif");
+		ImageIcon blackRook = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\rook_black.gif");
+		ImageIcon blackKing = new ImageIcon("C:\\Users\\Raf\\eclipse-workspace\\ai_2.zip_expanded\\TUC-Chess-AI2022\\TUC-Chess-AI22\\chess\\king_black.gif");
 		
 		// creating the black pawns
 		for(int j=0; j<columns; j++)

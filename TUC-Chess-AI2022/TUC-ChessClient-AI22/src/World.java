@@ -21,7 +21,7 @@ public class World
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 2;
+	public int maxDepth = 4;
 	
 	public World()
 	{
@@ -506,7 +506,7 @@ public class World
 	}
 	
 	// saves the current score at the class variable player_score
-	public void update_board(String move) {
+	public int update_board(String move) {
 		if (move.length()!=4) {
 			System.out.println("Error update_board. Length(move) !=4");
 		}
@@ -515,6 +515,7 @@ public class World
 		String enemyR;
 		String enemyP;
 		String playerP;
+		int playerScore = 0;
 		
 		// Pawns removed at last/first row
 		boolean IsPawn = false;
@@ -572,21 +573,21 @@ public class World
 			this.board[d_x][d_y] = this.board[s_x][s_y];
 			this.board[s_x][s_y] = " ";
 			
-			player_score += 1;
+			playerScore = 1;
 //			return move_points;
 		} // Enemy pawn there
 		else if (this.board[d_x][d_y].equals(enemyP)) {
 			this.board[d_x][d_y] = this.board[s_x][s_y];
 			this.board[s_x][s_y] = " ";
 			
-			player_score += 1;
+			playerScore = 1;
 //			return move_points;
 		} // Enemy Rook there 
 		else if (this.board[d_x][d_y].equals(enemyR)) {
 			this.board[d_x][d_y] = this.board[s_x][s_y];
 			this.board[s_x][s_y] = " ";
 			
-			player_score += 3;
+			playerScore = 3;
 //			return move_points;
 		} // Enemy king there
 		else if (this.board[d_x][d_y].equals(enemyK)) {
@@ -594,16 +595,18 @@ public class World
 			this.board[s_x][s_y] = " ";
 			
 			this.king_down_flag = true;
-			player_score += 8;
+			playerScore = 8;
 //			return move_points;
 		}
 		
 		// TODO: Check if states such us pawn goes to last row 			
 		// Is pawn and is at last row then take point and remove
 		if (IsPawn && (d_x == 0 || d_x == this.rows-1)) {
-			player_score ++;
+			playerScore ++;
 			this.board[d_x][d_y] = " ";
 		}
+		
+		return playerScore;
 	}
 	
 	public String selectAction()
@@ -619,7 +622,14 @@ public class World
 		nTurns++;
 		nBranches += availableMoves.size();
 		
-		return this.selectMinMax();  // this.selectRandomAction();
+		if(this.myColor ==1) {
+			System.out.println("I am a smart guy");
+			return this.selectMinMax(); 
+		}
+		else {
+			System.out.println("I am a dumb guy");
+			return this.selectRandomAction();
+		}
 	}
 	
 	@SuppressWarnings("unused")
@@ -651,31 +661,33 @@ public class World
 		//tempBoard = saveBoard();
     	//view_board();
 		
-		String tempString = findMinMax(0).move;		
+		SearchResult result = findMinMax(0);		
+
+		String nextMove = result.move;
+			
+		System.out.println("Player " + this.player + " played " + nextMove + " with weight " + result.score);
 		
-		//setBoard(tempBoard);
-		//view_board();
-		return tempString;
+		return nextMove;
 	}
 	
 	// returns the max profit subtree, and the move leading to it
 	private SearchResult findMinMax(int currentDepth)
 	{		
 		// initializations
-		view_board();
+		//view_board();
 		
 		
 		SearchResult result = new SearchResult();
 		ArrayList<SearchResult> childrenResults = new ArrayList<SearchResult>();
 		ArrayList<Integer> childrenScores = new ArrayList<Integer>();
-		System.out.println("[MinMax]depth=" + currentDepth + ",current_score="+this.player_score );
+		//System.out.println("[MinMax]depth=" + currentDepth + ",current_score="+this.player_score );
 		
 		// store current state(score, board,player,availableMoves
 		int tempScore = this.player_score;
 		String[][] tempBoard =  new String[this.rows][this.columns];
 		tempBoard = saveBoard();  // save the current board
 		
-		int tempPlayer = this.player;
+		//int tempPlayer = this.player;
 		ArrayList<String> tempAvailMoves = this.availableMoves; 
 		
 		
@@ -686,34 +698,45 @@ public class World
 			//System.out.println("Returning result " + result.score );
 			return result;			
 		}	
+		 
+		// Find the "children" of the current node		
+		// blackMoves() or whiteMoves() depending on depth
+		if (currentDepth%2 == 0)
+			if(this.player == 0)
+				whiteMoves();
+			else
+				blackMoves();
+		else // currentDepth%2==1
+			if(this.player == 0)
+				blackMoves();
+			else
+				whiteMoves();
+		
+		int lastScore = 0;
 		
 		// for each available move(children)
 		for (int i=0; i<this.availableMoves.size(); i++) {
 			//System.out.println("Investigating action " + this.availableMoves.get(i) + " of " + this.availableMoves.size());
 			// makeMove()
-			update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
-			// blackMoves() or whiteMoves() depending on depth
-			if (currentDepth%2 == 0)
-				if(this.player == 0)
-					whiteMoves();
-				else
-					blackMoves();
-			else // currentDepth%2==1
-				if(this.player == 0)
-					blackMoves();
-				else
-					whiteMoves();
+						
+			lastScore = update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
+
+			
 			// call selectMin(depth+1,) & store return values in a array
 			SearchResult tempResult = new SearchResult();
 			tempResult = findMinMax(currentDepth+1);  // this only contains a score!
 			tempResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
 			childrenResults.add(tempResult);
-			this.player_score = tempScore;
+			
+			if (currentDepth%2 == 0)
+				this.player_score += lastScore;  // its us
+			else
+				this.player_score -= lastScore;  // its the enemy
 			
 			//restore old state(go to to previous node after trying one move)
 			setBoard(tempBoard);
-			
-			this.player = tempPlayer;
+			this.player_score = tempScore;
+			//this.player = tempPlayer;
 			this.availableMoves = new ArrayList<String>(tempAvailMoves); 
 		}
 		
@@ -856,8 +879,7 @@ public class World
 		}
 		
 	}
-	
-	
+		
 	// save the current this.board to a temporary string
 	public String[][] saveBoard() {
 		String[][] tempString = new String[this.rows][this.columns];
