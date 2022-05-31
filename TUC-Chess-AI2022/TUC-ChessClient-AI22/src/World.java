@@ -1,21 +1,26 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
- 
+
 
 public class World
 {
+	public String[][] board = null;
 	private int rows = 7;
 	private int columns = 5;
-	private int rookBlocks = 3;		// rook can move towards <rookBlocks> blocks in any vertical or horizontal direction
-	private int noPrize = 9;
-
-	
-	private String[][] board = null;
 	private int myColor = 0;
 	private ArrayList<String> availableMoves = null;
+	private int rookBlocks = 3;		// rook can move towards <rookBlocks> blocks in any vertical or horizontal direction
 	private int nTurns = 0;
 	private int nBranches = 0;
+	private int noPrize = 9;
 	
+	public int player_score = 0;
+	public boolean king_down_flag = false;
+	public int player;
+	
+	// the max depth of a minmax search
+	public int maxDepth = 1;
 	
 	public World()
 	{
@@ -26,10 +31,11 @@ public class World
 		BP|BR|BK|BR|BP
 		BP|BP|BP|BP|BP
 		--|--|--|--|--
-		P |P |P |P |P     (prizes)
+		P |P |P |P |P 
 		--|--|--|--|--
 		WP|WP|WP|WP|WP
 		WP|WR|WK|WR|WP
+		
 		*/
 		
 		// initialization of the board
@@ -80,30 +86,14 @@ public class World
 	{
 		this.myColor = myColor;
 	}
-	
-	public String selectAction()
-	{
-		availableMoves = new ArrayList<String>();
-				
-		if(myColor == 0)		// I am the white player
-			this.whiteMoves();
-		else					// I am the black player
-			this.blackMoves();
-		
-		// keeping track of the branch factor
-		nTurns++;
-		nBranches += availableMoves.size();
-		
-		return this.selectRandomAction();
-	}
+
 	
 	private void whiteMoves()
+
 	{
 		String firstLetter = "";
 		String secondLetter = "";
 		String move = "";
-		
-		// check the whole board
 				
 		for(int i=0; i<rows; i++)
 		{
@@ -118,8 +108,6 @@ public class World
 				// check the kind of the white chess part
 				secondLetter = Character.toString(board[i][j].charAt(1));
 				
-				
-				// Rules for PAWNS
 				if(secondLetter.equals("P"))	// it is a pawn
 				{
 					
@@ -158,9 +146,6 @@ public class World
 						}
 					}
 				}
-				
-				
-				// Rules for ROOK
 				else if(secondLetter.equals("R"))	// it is a rook
 				{
 					// check if it can move upwards
@@ -247,8 +232,6 @@ public class World
 							break;
 					}
 				}
-				
-				// Rules for the movement of the KING
 				else // it is the king
 				{
 					// check if it can move upwards
@@ -521,6 +504,124 @@ public class World
 		}
 	}
 	
+	// saves the current score at the class variable player_score
+	public void update_board(String move) {
+		if (move.length()!=4) {
+			System.out.println("Error update_board. Length(move) !=4");
+		}
+		// To see at the board and calculate points
+		String enemyK;
+		String enemyR;
+		String enemyP;
+		String playerP;
+		
+		// Pawns removed at last/first row
+		boolean IsPawn = false;
+		
+//		int move_points = 0;
+		
+		// Set enemy players pawn
+		if (player==0) {
+			enemyK = "BK";
+			enemyR = "BR";
+			enemyP = "BP";
+			
+			playerP = "WP";
+		}else {
+			enemyK = "WK";
+			enemyR = "WR";
+			enemyP = "WP";
+			
+			playerP = "BP";
+		}
+		
+		//x -> rows
+		//y -> columns
+		// Set source
+		int s_x = Character.getNumericValue(move.charAt(0));
+		int s_y = Character.getNumericValue(move.charAt(1));
+		// Set destination
+		int d_x = Character.getNumericValue(move.charAt(2));
+		int d_y = Character.getNumericValue(move.charAt(3));
+		
+		// Check Coordinates
+		if (s_x < 0 || s_x > this.rows || s_y < 0 || s_y > this.columns) {
+			System.out.println("Error update_board. Invalid 'source' coordinates");
+		}
+		if (d_x < 0 || d_x > this.rows || d_y < 0 || d_y > this.columns) {
+			System.out.println("Error update_board. Invalid 'destination' coordinates");
+		}
+		
+		// To check if its pawn
+		if (this.board[s_x][s_y].equals(playerP)) {
+			IsPawn = true;
+		}
+		
+	
+		// Make move
+		// None there
+		if (this.board[d_x][d_y].equals(" ")) {
+			this.board[d_x][d_y] = this.board[s_x][s_y];
+			this.board[s_x][s_y] = " ";
+			
+//			return move_points;
+		} // Bonus point there
+		// TODO: Not sure if we take the points. Check probabilities. 
+		else if (this.board[d_x][d_y].equals("P")) {
+			this.board[d_x][d_y] = this.board[s_x][s_y];
+			this.board[s_x][s_y] = " ";
+			
+			player_score = 1;
+//			return move_points;
+		} // Enemy pawn there
+		else if (this.board[d_x][d_y].equals(enemyP)) {
+			this.board[d_x][d_y] = this.board[s_x][s_y];
+			this.board[s_x][s_y] = " ";
+			
+			player_score = 1;
+//			return move_points;
+		} // Enemy Rook there 
+		else if (this.board[d_x][d_y].equals(enemyR)) {
+			this.board[d_x][d_y] = this.board[s_x][s_y];
+			this.board[s_x][s_y] = " ";
+			
+			player_score = 3;
+//			return move_points;
+		} // Enemy king there
+		else if (this.board[d_x][d_y].equals(enemyK)) {
+			this.board[d_x][d_y] = this.board[s_x][s_y];
+			this.board[s_x][s_y] = " ";
+			
+			this.king_down_flag = true;
+			player_score = 8;
+//			return move_points;
+		}
+		
+		// TODO: Check if states such us pawn goes to last row 			
+		// Is pawn and is at last row then take point and remove
+		if (IsPawn && (d_x == 0 || d_x == this.rows-1)) {
+			player_score ++;
+			this.board[d_x][d_y] = " ";
+		}
+	}
+	
+	public String selectAction()
+	{
+		availableMoves = new ArrayList<String>();
+				
+		if(myColor == 0)		// I am the white player
+			this.whiteMoves();
+		else					// I am the black player
+			this.blackMoves();
+		
+		// keeping track of the branch factor
+		nTurns++;
+		nBranches += availableMoves.size();
+		
+		return this.selectMinMax();  // this.selectRandomAction();
+	}
+	
+	@SuppressWarnings("unused")
 	private String selectRandomAction()
 	{		
 		Random ran = new Random();
@@ -529,10 +630,137 @@ public class World
 		return availableMoves.get(x);
 	}
 	
-	private String selectActionMinMax() {
-		return MinMax.nextMove();
+	
+	class SearchResult {
+		public int score;
+		public String move;
 	}
 	
+	
+	public boolean gameHasEnded() {
+		// check if somebody won or there is a draw
+		
+		//TODO: fill it up
+		return false;
+	}
+
+	// Returns the next move for the current player
+	private String selectMinMax() {
+		return findMax(0).move;		
+	}
+	
+	// returns the max profit subtree, and the move leading to it
+	private SearchResult findMax(int currentDepth)
+	{		
+		// initializations
+		SearchResult result = new SearchResult();
+		ArrayList<SearchResult> childrenResults = new ArrayList<SearchResult>();
+		ArrayList<Integer> childrenScores = new ArrayList<Integer>();
+		System.out.println("[max]depth=" + currentDepth + ",current_score="+this.player_score );
+		
+		// store current state(score, board,player,availableMoves
+		int tempScore = this.player_score;
+		String[][] tempBoard = this.board;
+		int tempPlayer = this.player;
+		ArrayList<String> tempAvailMoves = this.availableMoves; 
+		
+		// if we are at leaf or max depth
+		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
+			// return current score
+			result.score = this.player_score;
+			return result;			
+		}	
+		
+		// for each available move(children)
+		for (int i=0; i<this.availableMoves.size(); i++) {
+			System.out.println("Investigating action " + this.availableMoves.get(i) + " of " + this.availableMoves.size());
+			// makeMove()
+			update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
+			// blackMoves() or whiteMoves() depending on depth
+			if (currentDepth%2 == 1) blackMoves(); else whiteMoves();
+			// call selectMin(depth+1,) & store return values in a array
+			childrenResults.add(findMin(currentDepth+1));
+			
+			//restore old state(go to to previous node after trying one move)
+			this.player_score = tempScore;;
+			this.board = tempBoard;
+			this.player = tempPlayer;
+			//this.availableMoves = tempAvailMoves; 
+		}
+		
+		
+		// find max(array) and put it into Result
+		for(int i=0; i<childrenResults.size(); i++) {
+			childrenScores.add(childrenResults.get(i).score);			
+		}
+		
+		result = childrenResults.get(childrenScores.indexOf(Collections.max(childrenScores)));
+		
+		// return result
+		return result;
+	}
+	
+	
+	// returns the min profit subtree, and the move leading to it
+	private SearchResult findMin(int currentDepth)
+	{		
+		// initializations
+		SearchResult result = new SearchResult();
+		ArrayList<SearchResult> childrenResults = new ArrayList<SearchResult>();
+		ArrayList<Integer> childrenScores = new ArrayList<Integer>();
+		System.out.println("[max]depth=" + currentDepth + ",current_score="+this.player_score );
+		
+		// store current state(score, board,player,availableMoves
+		int tempScore = this.player_score;
+		String[][] tempBoard = this.board;
+		int tempPlayer = this.player;
+		ArrayList<String> tempAvailMoves = this.availableMoves; 
+		
+		// if we are at leaf or max depth
+		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
+			// return current score
+			result.score = this.player_score;
+			return result;			
+		}	
+		
+		// for each available move(children)
+		for (int i=0; i<this.availableMoves.size(); i++) {
+			System.out.println("Investigating action " + this.availableMoves.get(i) + " of " + this.availableMoves.size());
+			// makeMove()
+			update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
+			// blackMoves() or whiteMoves() depending on depth
+			if (currentDepth%2 == 0) blackMoves(); else whiteMoves();
+			// call selectMin(depth+1,) & store return values in a array
+			childrenResults.add(findMax(currentDepth+1));
+			
+			//restore old state(go to to previous node after trying one move)
+			this.player_score = tempScore;;
+			this.board = tempBoard;
+			this.player = tempPlayer;
+			//this.availableMoves = tempAvailMoves; 
+		}
+		
+		
+		// find max(array) and put it into Result
+		for(int i=0; i<childrenResults.size(); i++) {
+			childrenScores.add(childrenResults.get(i).score);			
+		}
+		
+		result = childrenResults.get(childrenScores.indexOf(Collections.min(childrenScores)));
+		
+		// return result
+		return result;
+	}
+	
+	
+	
+
+	
+
+		
+		
+		
+		
 	public double getAvgBFactor()
 	{
 		return nBranches / (double) nTurns;

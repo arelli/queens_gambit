@@ -30,17 +30,19 @@ public class MinMax {
 		
 		// Save everything
 		this.initialScore = currentScore;
-		String result =  findMax(currentBoard, currentScore).move;
+		String result =  findMax(currentBoard,0, currentScore).move;
 		// return everything to initial state
 		return result;
 	}
 	
 	
 	
-	public SearchResult findMax(String[][] board, int currentDepth) {
+	public SearchResult findMax(String[][] board,int score, int currentDepth) {
 		SearchResult result = new SearchResult();
 		// save the current state of the board
 		String[][] currentBoard = board;
+		
+		
 		this.initialBoard = board;
 		
 		// if children leaf, or at max depth-1
@@ -53,22 +55,23 @@ public class MinMax {
 		
 		
 		
-		//findMin(board, currentDepth+1);
+		findMin(board,score,currentDepth+1);
+		
+		// restore previous state
 		this.initialBoard = currentBoard;
+		
 		return result;
 	}
 	
-	public SearchResult findMin() {
+	
+	
+	
+	
+	public SearchResult findMin(String[][] board,int score, int currentDepth) {
 		SearchResult result = new SearchResult();
 		
 		
 		return result;
-	}
-	
-	// make a temporary move to check the score
-	public int makeTempMove(String[] temMove) {
-		
-		return 0;
 	}
 
 }
