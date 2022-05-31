@@ -6,6 +6,7 @@ import java.util.Random;
 public class World
 {
 	public String[][] board = null;
+	public String[][] cur_board = null;
 	private int rows = 7;
 	private int columns = 5;
 	private int myColor = 0;
@@ -571,21 +572,21 @@ public class World
 			this.board[d_x][d_y] = this.board[s_x][s_y];
 			this.board[s_x][s_y] = " ";
 			
-			player_score = 1;
+			player_score += 1;
 //			return move_points;
 		} // Enemy pawn there
 		else if (this.board[d_x][d_y].equals(enemyP)) {
 			this.board[d_x][d_y] = this.board[s_x][s_y];
 			this.board[s_x][s_y] = " ";
 			
-			player_score = 1;
+			player_score += 1;
 //			return move_points;
 		} // Enemy Rook there 
 		else if (this.board[d_x][d_y].equals(enemyR)) {
 			this.board[d_x][d_y] = this.board[s_x][s_y];
 			this.board[s_x][s_y] = " ";
 			
-			player_score = 3;
+			player_score += 3;
 //			return move_points;
 		} // Enemy king there
 		else if (this.board[d_x][d_y].equals(enemyK)) {
@@ -593,7 +594,7 @@ public class World
 			this.board[s_x][s_y] = " ";
 			
 			this.king_down_flag = true;
-			player_score = 8;
+			player_score += 8;
 //			return move_points;
 		}
 		
@@ -646,28 +647,46 @@ public class World
 
 	// Returns the next move for the current player
 	private String selectMinMax() {
-		return findMax(0).move;		
+//		String[][] tempBoard =  new String[this.rows][this.columns];
+//		copyBoard(this.board,tempBoard);
+//		view_board();
+		
+		String tempString = findMinMax(0).move;		
+		
+//		copyBoard(tempBoard, this.board);
+//		view_board();
+		return tempString;
 	}
 	
 	// returns the max profit subtree, and the move leading to it
-	private SearchResult findMax(int currentDepth)
+	private SearchResult findMinMax(int currentDepth)
 	{		
 		// initializations
+		view_board();
 		SearchResult result = new SearchResult();
 		ArrayList<SearchResult> childrenResults = new ArrayList<SearchResult>();
 		ArrayList<Integer> childrenScores = new ArrayList<Integer>();
-		System.out.println("[max]depth=" + currentDepth + ",current_score="+this.player_score );
+		//System.out.println("[MinMax]depth=" + currentDepth + ",current_score="+this.player_score );
 		
 		// store current state(score, board,player,availableMoves
-		int tempScore = this.player_score;
-		String[][] tempBoard = this.board;
+		//int tempScore = this.player_score;
+		//String[][] tempBoard = this.board;
+		
+		String[][] tempBoard = new String[this.rows][this.columns];
+		for(int i = 0; i < this.board.length; i++)
+			tempBoard[i] = this.board[i].clone();
+		
+		
+		
 		int tempPlayer = this.player;
 		ArrayList<String> tempAvailMoves = this.availableMoves; 
+		
 		
 		// if we are at leaf or max depth
 		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
 			// return current score
 			result.score = this.player_score;
+			System.out.println("Returning result " + result.score );
 			return result;			
 		}	
 		
@@ -677,15 +696,30 @@ public class World
 			// makeMove()
 			update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
 			// blackMoves() or whiteMoves() depending on depth
-			if (currentDepth%2 == 1) blackMoves(); else whiteMoves();
+			if (currentDepth%2 == 0)
+				if(this.player == 0)
+					blackMoves();
+				else
+					whiteMoves();
+			else 
+				if(this.player == 1 )
+					whiteMoves();
+				else
+					blackMoves();
 			// call selectMin(depth+1,) & store return values in a array
-			childrenResults.add(findMin(currentDepth+1));
+			SearchResult tempResult = new SearchResult();
+			tempResult = findMinMax(currentDepth+1);  // this only contains a score!
+			tempResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
+			childrenResults.add(tempResult);
 			
 			//restore old state(go to to previous node after trying one move)
-			this.player_score = tempScore;;
-			this.board = tempBoard;
+			//this.player_score = tempScore;;
+			//this.board = tempBoard;
+			for(int k = 0; i < tempBoard.length; i++)
+				this.board[k] = tempBoard[k].clone();
+			
 			this.player = tempPlayer;
-			//this.availableMoves = tempAvailMoves; 
+			this.availableMoves = new ArrayList<String>(tempAvailMoves); 
 		}
 		
 		
@@ -694,13 +728,19 @@ public class World
 			childrenScores.add(childrenResults.get(i).score);			
 		}
 		
-		result = childrenResults.get(childrenScores.indexOf(Collections.max(childrenScores)));
+		
+		if (currentDepth%2 == 0)
+			result = childrenResults.get(childrenScores.indexOf(Collections.max(childrenScores)));
+		else
+			result = childrenResults.get(childrenScores.indexOf(Collections.min(childrenScores)));
 		
 		// return result
+		System.out.println("Returning move " + result.move + ", " + result.score );
 		return result;
 	}
 	
 	
+	/*
 	// returns the min profit subtree, and the move leading to it
 	private SearchResult findMin(int currentDepth)
 	{		
@@ -708,7 +748,7 @@ public class World
 		SearchResult result = new SearchResult();
 		ArrayList<SearchResult> childrenResults = new ArrayList<SearchResult>();
 		ArrayList<Integer> childrenScores = new ArrayList<Integer>();
-		System.out.println("[max]depth=" + currentDepth + ",current_score="+this.player_score );
+		System.out.println("[min]depth=" + currentDepth + ",current_score="+this.player_score );
 		
 		// store current state(score, board,player,availableMoves
 		int tempScore = this.player_score;
@@ -737,7 +777,7 @@ public class World
 			this.player_score = tempScore;;
 			this.board = tempBoard;
 			this.player = tempPlayer;
-			//this.availableMoves = tempAvailMoves; 
+			this.availableMoves = new ArrayList<String>(tempAvailMoves); 
 		}
 		
 		
@@ -752,13 +792,7 @@ public class World
 		return result;
 	}
 	
-	
-	
-
-	
-
-		
-		
+	*/
 		
 		
 	public double getAvgBFactor()
@@ -791,6 +825,50 @@ public class World
 		// check if a prize has been added in the game
 		if(prizeX != noPrize)
 			board[prizeX][prizeY] = "P";
+	}
+	
+	
+	public void view_board(){
+		
+		String chessPart;
+
+		
+		System.out.println("Board at current state");
+		System.out.println("======================");
+		
+		for(int i=0; i<rows; i++)
+		{
+			for(int j=0; j<columns; j++)
+			{
+				chessPart = board[i][j];
+				
+				
+				if (chessPart.equals(" ")){
+					// Is Empty Space
+					System.out.print("--");
+				} else {
+					System.out.print(chessPart);
+					
+				}
+				
+				// Print Horizontal definers
+				if (j < columns-1) {
+					System.out.print("|");
+				}
+			}
+			// New line
+			System.out.println("");
+		}
+		
+	}
+	
+	
+	public void copyBoard(String[][] oldBoard, String[][] newBoard) {
+		for(int i = 0; i<this.rows; i++) {
+			for (int k =0; k<this.columns; k++)
+				oldBoard[i][k] = newBoard[i][k];
+		}
+		return;
 	}
 	
 }
