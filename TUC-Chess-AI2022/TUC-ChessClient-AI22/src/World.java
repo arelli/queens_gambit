@@ -21,7 +21,7 @@ public class World
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 1;
+	public int maxDepth = 2;
 	
 	public World()
 	{
@@ -647,14 +647,14 @@ public class World
 
 	// Returns the next move for the current player
 	private String selectMinMax() {
-//		String[][] tempBoard =  new String[this.rows][this.columns];
-//		copyBoard(this.board,tempBoard);
-//		view_board();
+		//String[][] tempBoard =  new String[this.rows][this.columns];
+		//tempBoard = saveBoard();
+    	//view_board();
 		
 		String tempString = findMinMax(0).move;		
 		
-//		copyBoard(tempBoard, this.board);
-//		view_board();
+		//setBoard(tempBoard);
+		//view_board();
 		return tempString;
 	}
 	
@@ -663,20 +663,17 @@ public class World
 	{		
 		// initializations
 		view_board();
+		
+		
 		SearchResult result = new SearchResult();
 		ArrayList<SearchResult> childrenResults = new ArrayList<SearchResult>();
 		ArrayList<Integer> childrenScores = new ArrayList<Integer>();
-		//System.out.println("[MinMax]depth=" + currentDepth + ",current_score="+this.player_score );
+		System.out.println("[MinMax]depth=" + currentDepth + ",current_score="+this.player_score );
 		
 		// store current state(score, board,player,availableMoves
-		//int tempScore = this.player_score;
-		//String[][] tempBoard = this.board;
-		
-		String[][] tempBoard = new String[this.rows][this.columns];
-		for(int i = 0; i < this.board.length; i++)
-			tempBoard[i] = this.board[i].clone();
-		
-		
+		int tempScore = this.player_score;
+		String[][] tempBoard =  new String[this.rows][this.columns];
+		tempBoard = saveBoard();  // save the current board
 		
 		int tempPlayer = this.player;
 		ArrayList<String> tempAvailMoves = this.availableMoves; 
@@ -686,37 +683,35 @@ public class World
 		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
 			// return current score
 			result.score = this.player_score;
-			System.out.println("Returning result " + result.score );
+			//System.out.println("Returning result " + result.score );
 			return result;			
 		}	
 		
 		// for each available move(children)
 		for (int i=0; i<this.availableMoves.size(); i++) {
-			System.out.println("Investigating action " + this.availableMoves.get(i) + " of " + this.availableMoves.size());
+			//System.out.println("Investigating action " + this.availableMoves.get(i) + " of " + this.availableMoves.size());
 			// makeMove()
 			update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
 			// blackMoves() or whiteMoves() depending on depth
 			if (currentDepth%2 == 0)
 				if(this.player == 0)
-					blackMoves();
-				else
-					whiteMoves();
-			else 
-				if(this.player == 1 )
 					whiteMoves();
 				else
 					blackMoves();
+			else // currentDepth%2==1
+				if(this.player == 0)
+					blackMoves();
+				else
+					whiteMoves();
 			// call selectMin(depth+1,) & store return values in a array
 			SearchResult tempResult = new SearchResult();
 			tempResult = findMinMax(currentDepth+1);  // this only contains a score!
 			tempResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
 			childrenResults.add(tempResult);
+			this.player_score = tempScore;
 			
 			//restore old state(go to to previous node after trying one move)
-			//this.player_score = tempScore;;
-			//this.board = tempBoard;
-			for(int k = 0; i < tempBoard.length; i++)
-				this.board[k] = tempBoard[k].clone();
+			setBoard(tempBoard);
 			
 			this.player = tempPlayer;
 			this.availableMoves = new ArrayList<String>(tempAvailMoves); 
@@ -735,7 +730,7 @@ public class World
 			result = childrenResults.get(childrenScores.indexOf(Collections.min(childrenScores)));
 		
 		// return result
-		System.out.println("Returning move " + result.move + ", " + result.score );
+		//System.out.println("Returning move " + result.move + ", " + result.score );
 		return result;
 	}
 	
@@ -827,7 +822,7 @@ public class World
 			board[prizeX][prizeY] = "P";
 	}
 	
-	
+	// print the board at the output
 	public void view_board(){
 		
 		String chessPart;
@@ -863,10 +858,21 @@ public class World
 	}
 	
 	
-	public void copyBoard(String[][] oldBoard, String[][] newBoard) {
+	// save the current this.board to a temporary string
+	public String[][] saveBoard() {
+		String[][] tempString = new String[this.rows][this.columns];
 		for(int i = 0; i<this.rows; i++) {
 			for (int k =0; k<this.columns; k++)
-				oldBoard[i][k] = newBoard[i][k];
+				tempString[i][k] = this.board[i][k];
+		}
+		return tempString;
+	}
+	
+	// set the current this.board to a temporary string
+	public void setBoard(String[][] newBoard) {
+		for(int i = 0; i<this.rows; i++) {
+			for (int k =0; k<this.columns; k++)
+				this.board[i][k] = newBoard[i][k];
 		}
 		return;
 	}
