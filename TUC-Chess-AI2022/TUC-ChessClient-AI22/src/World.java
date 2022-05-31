@@ -1,18 +1,21 @@
 import java.util.ArrayList;
 import java.util.Random;
-
+ 
 
 public class World
 {
-	private String[][] board = null;
 	private int rows = 7;
 	private int columns = 5;
+	private int rookBlocks = 3;		// rook can move towards <rookBlocks> blocks in any vertical or horizontal direction
+	private int noPrize = 9;
+
+	
+	private String[][] board = null;
 	private int myColor = 0;
 	private ArrayList<String> availableMoves = null;
-	private int rookBlocks = 3;		// rook can move towards <rookBlocks> blocks in any vertical or horizontal direction
 	private int nTurns = 0;
 	private int nBranches = 0;
-	private int noPrize = 9;
+	
 	
 	public World()
 	{
@@ -99,6 +102,8 @@ public class World
 		String firstLetter = "";
 		String secondLetter = "";
 		String move = "";
+		
+		// check the whole board
 				
 		for(int i=0; i<rows; i++)
 		{
@@ -113,6 +118,8 @@ public class World
 				// check the kind of the white chess part
 				secondLetter = Character.toString(board[i][j].charAt(1));
 				
+				
+				// Rules for PAWNS
 				if(secondLetter.equals("P"))	// it is a pawn
 				{
 					
@@ -151,6 +158,9 @@ public class World
 						}
 					}
 				}
+				
+				
+				// Rules for ROOK
 				else if(secondLetter.equals("R"))	// it is a rook
 				{
 					// check if it can move upwards
@@ -237,6 +247,8 @@ public class World
 							break;
 					}
 				}
+				
+				// Rules for the movement of the KING
 				else // it is the king
 				{
 					// check if it can move upwards
@@ -515,6 +527,10 @@ public class World
 		int x = ran.nextInt(availableMoves.size());
 		
 		return availableMoves.get(x);
+	}
+	
+	private String selectActionMinMax() {
+		return MinMax.nextMove();
 	}
 	
 	public double getAvgBFactor()
