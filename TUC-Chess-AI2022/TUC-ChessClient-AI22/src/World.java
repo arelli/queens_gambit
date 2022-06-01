@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 
 public class World
@@ -16,12 +18,12 @@ public class World
 	private int nBranches = 0;
 	private int noPrize = 9;
 	
-	public int player_score = 0;
+	public int player_score;
 	public boolean king_down_flag = false;
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 4;
+	public int maxDepth = 3;
 	
 	public World()
 	{
@@ -81,6 +83,7 @@ public class World
 			board[rows/2][j] = "P";
 		
 		availableMoves = new ArrayList<String>();
+		this.player_score = 0;
 	}
 	
 	public void setMyColor(int myColor)
@@ -515,7 +518,7 @@ public class World
 		String enemyR;
 		String enemyP;
 		String playerP;
-		int playerScore = 0;
+		int playerScore=0;
 		
 		// Pawns removed at last/first row
 		boolean IsPawn = false;
@@ -650,7 +653,8 @@ public class World
 	
 	public boolean gameHasEnded() {
 		// check if somebody won or there is a draw
-		
+		//if(this.king_down_flag)
+		//	return true;
 		//TODO: fill it up
 		return false;
 	}
@@ -674,7 +678,7 @@ public class World
 	private SearchResult findMinMax(int currentDepth)
 	{		
 		// initializations
-		//view_board();
+		view_board();
 		
 		
 		SearchResult result = new SearchResult();
@@ -695,22 +699,13 @@ public class World
 		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
 			// return current score
 			result.score = this.player_score;
-			//System.out.println("Returning result " + result.score );
+			System.out.println("Returning result " + result.score );
 			return result;			
 		}	
 		 
 		// Find the "children" of the current node		
 		// blackMoves() or whiteMoves() depending on depth
-		if (currentDepth%2 == 0)
-			if(this.player == 0)
-				whiteMoves();
-			else
-				blackMoves();
-		else // currentDepth%2==1
-			if(this.player == 0)
-				blackMoves();
-			else
-				whiteMoves();
+		getAvailableMoves(this.myColor, currentDepth);
 		
 		int lastScore = 0;
 		
@@ -724,9 +719,13 @@ public class World
 			
 			// call selectMin(depth+1,) & store return values in a array
 			SearchResult tempResult = new SearchResult();
+			
 			tempResult = findMinMax(currentDepth+1);  // this only contains a score!
 			tempResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
+			
 			childrenResults.add(tempResult);
+			
+			
 			
 			if (currentDepth%2 == 0)
 				this.player_score += lastScore;  // its us
@@ -735,25 +734,25 @@ public class World
 			
 			//restore old state(go to to previous node after trying one move)
 			setBoard(tempBoard);
+			//this.player_score = tempScore;
+			this.availableMoves = new ArrayList<String>(tempAvailMoves);
 			this.player_score = tempScore;
-			//this.player = tempPlayer;
-			this.availableMoves = new ArrayList<String>(tempAvailMoves); 
 		}
+		
 		
 		
 		// find max(array) and put it into Result
 		for(int i=0; i<childrenResults.size(); i++) {
 			childrenScores.add(childrenResults.get(i).score);			
 		}
-		
-		
-		if (currentDepth%2 == 0)
+				
+		if (currentDepth%2 == 0) // while on even depth, find max
 			result = childrenResults.get(childrenScores.indexOf(Collections.max(childrenScores)));
-		else
+		else  // while at odd length, find min
 			result = childrenResults.get(childrenScores.indexOf(Collections.min(childrenScores)));
 		
 		// return result
-		//System.out.println("Returning move " + result.move + ", " + result.score );
+		System.out.println("Returning move " + result.move + ", " + result.score );
 		return result;
 	}
 	
@@ -811,8 +810,7 @@ public class World
 	}
 	
 	*/
-		
-		
+				
 	public double getAvgBFactor()
 	{
 		return nBranches / (double) nTurns;
@@ -898,5 +896,20 @@ public class World
 		}
 		return;
 	}
+
+	// get the available moces based on the current board, and the current player
+	public void getAvailableMoves(int mycolor, int currentDepth) {
+		if (currentDepth%2 == 0)
+			if(this.myColor == 0)
+				whiteMoves();
+			else
+				blackMoves();
+		else // currentDepth%2==1
+			if(this.myColor == 0)
+				blackMoves();
+			else
+				whiteMoves();
+	}
+
 	
 }
