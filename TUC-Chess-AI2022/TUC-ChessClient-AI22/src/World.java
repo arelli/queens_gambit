@@ -23,7 +23,7 @@ public class World
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 3;
+	public int maxDepth = 4;
 	
 	public World()
 	{
@@ -321,16 +321,16 @@ public class World
 				{
 					
 					// check if it can move one vertical position ahead
-					firstLetter = Character.toString(board[i+1][j].charAt(0));
-					
-					if(firstLetter.equals(" ") || firstLetter.equals("P"))
-					{
-						move = Integer.toString(i) + Integer.toString(j) + 
-							   Integer.toString(i+1) + Integer.toString(j);
-						
-						availableMoves.add(move);
+					if(i<6) {  // added by me to stop it from out of bounds exception
+						firstLetter = Character.toString(board[i+1][j].charAt(0));
+						if(firstLetter.equals(" ") || firstLetter.equals("P"))
+						{
+							move = Integer.toString(i) + Integer.toString(j) + 
+								   Integer.toString(i+1) + Integer.toString(j);
+							
+							availableMoves.add(move);
+						}
 					}
-					
 					// check if it can move crosswise to the left
 					if(j!=0 && i!=rows-1)
 					{
@@ -665,7 +665,7 @@ public class World
 		//tempBoard = saveBoard();
     	//view_board();
 		
-		SearchResult result = findMinMax(0);		
+		SearchResult result = findMinMax(saveBoard(), 0);		
 
 		String nextMove = result.move;
 			
@@ -675,85 +675,83 @@ public class World
 	}
 	
 	// returns the max profit subtree, and the move leading to it
-	private SearchResult findMinMax(int currentDepth)
+	private SearchResult findMinMax(String[][] initialBoard, int currentDepth)
 	{		
-		// initializations
-		view_board();
-		
-		
-		SearchResult result = new SearchResult();
-		ArrayList<SearchResult> childrenResults = new ArrayList<SearchResult>();
-		ArrayList<Integer> childrenScores = new ArrayList<Integer>();
-		//System.out.println("[MinMax]depth=" + currentDepth + ",current_score="+this.player_score );
+		// initializations	
+		SearchResult result = new SearchResult(),tempResult = new SearchResult(),maxResult = new SearchResult(), minResult = new SearchResult();
+		int negativeInfinity = -1000, positiveInfinity = 1000;
+		maxResult.score = negativeInfinity; minResult.score= positiveInfinity;
 		
 		// store current state(score, board,player,availableMoves
-		int tempScore = this.player_score;
 		String[][] tempBoard =  new String[this.rows][this.columns];
 		tempBoard = saveBoard();  // save the current board
-		
-		//int tempPlayer = this.player;
 		ArrayList<String> tempAvailMoves = this.availableMoves; 
 		
 		
 		// if we are at leaf or max depth
 		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
-			// return current score
-			result.score = this.player_score;
-			System.out.println("Returning result " + result.score );
+			result.score = getPoints(initialBoard,this.board, this.myColor);  // calculate how good or bad the current state of the game si
 			return result;			
 		}	
 		 
-		// Find the "children" of the current node		
-		// blackMoves() or whiteMoves() depending on depth
-		getAvailableMoves(this.myColor, currentDepth);
+		// Find the "children" of the current node
+		int otherColor;
+		if(currentDepth%2==0) 
+			if(this.myColor==1)
+				otherColor=0;
+			else
+				otherColor=1;
+		else
+			if(this.myColor==1)
+				otherColor=1;
+			else
+				otherColor=0;
+			
+		this.availableMoves = new ArrayList<String>();
+		if(currentDepth%2==0) 
+			getAvailableMoves(this.myColor, currentDepth);
+		else
+			getAvailableMoves(otherColor, currentDepth);
 		
-		int lastScore = 0;
-		
+		ArrayList<Integer> scores = new ArrayList<Integer>();  // deubug
 		// for each available move(children)
 		for (int i=0; i<this.availableMoves.size(); i++) {
-			//System.out.println("Investigating action " + this.availableMoves.get(i) + " of " + this.availableMoves.size());
-			// makeMove()
-						
-			lastScore = update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
-
+			// makeMove()						
+			update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
 			
-			// call selectMin(depth+1,) & store return values in a array
-			SearchResult tempResult = new SearchResult();
-			
-			tempResult = findMinMax(currentDepth+1);  // this only contains a score!
+			tempResult = findMinMax(initialBoard, currentDepth+1);  // this only contains a score!
 			tempResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
 			
-			childrenResults.add(tempResult);
+			if(currentDepth%2==0) {
+				if(tempResult.score>maxResult.score)
+					maxResult=tempResult;
+			}
+			else {
+				if(tempResult.score<minResult.score)
+					minResult=tempResult;
+			}
 			
-			
-			
-			if (currentDepth%2 == 0)
-				this.player_score += lastScore;  // its us
-			else
-				this.player_score -= lastScore;  // its the enemy
-			
+			scores.add(tempResult.score);  // only for debug
+				
 			//restore old state(go to to previous node after trying one move)
 			setBoard(tempBoard);
-			//this.player_score = tempScore;
 			this.availableMoves = new ArrayList<String>(tempAvailMoves);
-			this.player_score = tempScore;
 		}
 		
-		
-		
-		// find max(array) and put it into Result
-		for(int i=0; i<childrenResults.size(); i++) {
-			childrenScores.add(childrenResults.get(i).score);			
+		// debug only
+		for(int i=0; i<scores.size();i++) {
+			System.out.print("["+scores.get(i)+"]");
 		}
-				
-		if (currentDepth%2 == 0) // while on even depth, find max
-			result = childrenResults.get(childrenScores.indexOf(Collections.max(childrenScores)));
-		else  // while at odd length, find min
-			result = childrenResults.get(childrenScores.indexOf(Collections.min(childrenScores)));
 		
 		// return result
-		System.out.println("Returning move " + result.move + ", " + result.score );
-		return result;
+		if(currentDepth%2==0) {
+			System.out.println("-->[max]" + maxResult.score);
+			return maxResult;			
+		}
+		else {
+			System.out.println("-->[min]" + minResult.score );
+			return minResult;
+		}
 	}
 	
 	
@@ -897,7 +895,7 @@ public class World
 		return;
 	}
 
-	// get the available moces based on the current board, and the current player
+	// get the available moves based on the current board, and the current player
 	public void getAvailableMoves(int mycolor, int currentDepth) {
 		if (currentDepth%2 == 0)
 			if(this.myColor == 0)
@@ -911,5 +909,56 @@ public class World
 				whiteMoves();
 	}
 
-	
+	// takes two boards as an argument, and compares the point difference between the two
+	// carefull: a crude estimation!
+ 	public int getPoints(String[][] initialBoard, String[][] currentBoard, int player) {
+		//player is 0 for white, and 1 for black. It can be taken  by this.myColor
+		int currentPoints =0, initialPoints=0;
+		String myK,myR,myP,enemyK,enemyR,enemyP;
+		
+		// Set enemy players pawn
+		if (player==0) {
+			enemyK = "BK";	enemyR = "BR";	enemyP = "BP";
+			myK = "WK";	myR = "WR";	myP = "WP";
+		}
+		else {
+			enemyK = "WK"; enemyR = "WR"; enemyP = "WP";
+			myK = "BK";	myR = "BR";	myP = "BP";
+		}
+		
+		for(int row = 0; row<this.rows;row++) {
+			for(int col = 0; col<this.columns;col++) {
+				//count final board "points"
+				if(currentBoard[row][col].equals(myK))
+					currentPoints+=8;
+				else if(currentBoard[row][col].equals(myR))
+					currentPoints+=3;
+				else if(currentBoard[row][col].equals(myP))
+					currentPoints+=1;		
+				
+				if(currentBoard[row][col].equals(enemyK))
+					currentPoints-=8;
+				else if(currentBoard[row][col].equals(enemyR))
+					currentPoints-=3;
+				else if(currentBoard[row][col].equals(enemyP))
+					currentPoints-=1;
+				
+				
+				if(initialBoard[row][col].equals(myK))
+					initialPoints+=8;
+				else if(initialBoard[row][col].equals(myR))
+					initialPoints+=3;
+				else if(initialBoard[row][col].equals(myP))
+					initialPoints+=1;		
+				
+				if(initialBoard[row][col].equals(enemyK))
+					initialPoints-=8;
+				else if(initialBoard[row][col].equals(enemyR))
+					initialPoints-=3;
+				else if(initialBoard[row][col].equals(enemyP))
+					initialPoints-=1;
+			}
+		}
+		return currentPoints-initialPoints;		
+	}
 }
