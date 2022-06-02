@@ -321,7 +321,7 @@ public class World
 				{
 					
 					// check if it can move one vertical position ahead
-					if(i<6) {  // added by me to stop it from out of bounds exception
+					if(i<6) {
 						firstLetter = Character.toString(board[i+1][j].charAt(0));
 						if(firstLetter.equals(" ") || firstLetter.equals("P"))
 						{
@@ -679,10 +679,11 @@ public class World
 	{		
 		// initializations	
 		SearchResult result = new SearchResult(),tempResult = new SearchResult(),maxResult = new SearchResult(), minResult = new SearchResult();
-		int negativeInfinity = -1000, positiveInfinity = 1000;
+		int negativeInfinity = -50000, positiveInfinity = 50000;
 		maxResult.score = negativeInfinity; minResult.score= positiveInfinity;
 		
 		// store current state(score, board,player,availableMoves
+		int tempScore = this.player_score;
 		String[][] tempBoard =  new String[this.rows][this.columns];
 		tempBoard = saveBoard();  // save the current board
 		ArrayList<String> tempAvailMoves = this.availableMoves; 
@@ -691,6 +692,11 @@ public class World
 		// if we are at leaf or max depth
 		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
 			result.score = getPoints(initialBoard,this.board, this.myColor);  // calculate how good or bad the current state of the game si
+			if(true) {
+				System.out.println("Points calculated:          " + result.score);
+				view_board();	
+				}
+			
 			return result;			
 		}	
 		 
@@ -713,7 +719,6 @@ public class World
 		else
 			getAvailableMoves(otherColor, currentDepth);
 		
-		ArrayList<Integer> scores = new ArrayList<Integer>();  // deubug
 		// for each available move(children)
 		for (int i=0; i<this.availableMoves.size(); i++) {
 			// makeMove()						
@@ -731,27 +736,17 @@ public class World
 					minResult=tempResult;
 			}
 			
-			scores.add(tempResult.score);  // only for debug
-				
 			//restore old state(go to to previous node after trying one move)
 			setBoard(tempBoard);
 			this.availableMoves = new ArrayList<String>(tempAvailMoves);
-		}
-		
-		// debug only
-		for(int i=0; i<scores.size();i++) {
-			System.out.print("["+scores.get(i)+"]");
+			this.player_score = tempScore;
 		}
 		
 		// return result
-		if(currentDepth%2==0) {
-			System.out.println("-->[max]" + maxResult.score);
-			return maxResult;			
-		}
-		else {
-			System.out.println("-->[min]" + minResult.score );
+		if(currentDepth%2==0) 
+			return maxResult;
+		else
 			return minResult;
-		}
 	}
 	
 	
@@ -910,10 +905,9 @@ public class World
 	}
 
 	// takes two boards as an argument, and compares the point difference between the two
-	// carefull: a crude estimation!
  	public int getPoints(String[][] initialBoard, String[][] currentBoard, int player) {
 		//player is 0 for white, and 1 for black. It can be taken  by this.myColor
-		int currentPoints =0, initialPoints=0;
+		int currentPoints =0;
 		String myK,myR,myP,enemyK,enemyR,enemyP;
 		
 		// Set enemy players pawn
@@ -942,23 +936,8 @@ public class World
 					currentPoints-=3;
 				else if(currentBoard[row][col].equals(enemyP))
 					currentPoints-=1;
-				
-				
-				if(initialBoard[row][col].equals(myK))
-					initialPoints+=8;
-				else if(initialBoard[row][col].equals(myR))
-					initialPoints+=3;
-				else if(initialBoard[row][col].equals(myP))
-					initialPoints+=1;		
-				
-				if(initialBoard[row][col].equals(enemyK))
-					initialPoints-=8;
-				else if(initialBoard[row][col].equals(enemyR))
-					initialPoints-=3;
-				else if(initialBoard[row][col].equals(enemyP))
-					initialPoints-=1;
 			}
 		}
-		return currentPoints-initialPoints;		
+		return currentPoints;		
 	}
 }
