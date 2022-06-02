@@ -625,7 +625,7 @@ public class World
 		nTurns++;
 		nBranches += availableMoves.size();
 		
-		if(this.myColor ==1) {
+		if(this.myColor ==0) {
 			System.out.println("I am a smart guy");
 			return this.selectMinMax(); 
 		}
@@ -714,45 +714,60 @@ public class World
 		int otherColor;
 		
 		if(currentDepth%2==0) {
-			getAvailableMoves(this.myColor, currentDepth);
+			getAvailableMoves(this.myColor);
 		}
 		else if(currentDepth%2==1){
 			if(this.myColor==1)
-				otherColor=1;
-			else
 				otherColor=0;
-			getAvailableMoves(otherColor, currentDepth);
+			else
+				otherColor=1;
+			
+			getAvailableMoves(otherColor);
 		}			
+		
+		ArrayList<Integer> childrenResults = new ArrayList<Integer>();  // DEBUG
 		
 		// for each available move(children)
 		for (int i=0; i<this.availableMoves.size(); i++) {
-			// makeMove()						
+			// make a simulated move	
 			newScore = update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
 			
 			// get the move before the findMinMax() makes any changes to the availableMoves arraylist!
-			tempResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
+			maxResult.move = minResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
 						
 			if(currentDepth%2==0) {
 				tempResult.score = findMinMax(currentDepth+1, previousScore+newScore).score;  // my player's score is added
 				if(tempResult.score>maxResult.score)
-					maxResult=tempResult;
+					maxResult.score=tempResult.score;
+				childrenResults.add(maxResult.score);  // DEBUG
 			}
 			else {
 				tempResult.score = findMinMax(currentDepth+1, previousScore-newScore).score;  // the enemy players score is subtracted
 				if(tempResult.score<minResult.score)
-					minResult=tempResult;
+					minResult.score=tempResult.score;
+				childrenResults.add(minResult.score);  // DEBUG
 			}
+			
+			
 			
 			//restore old state(go to to previous node after trying one move)
 			setBoard(tempBoard);
 			setAvailableMoves(tempAvailMoves);//this.availableMoves = new ArrayList<String>(tempAvailMoves);
 		}
 		
+		for (int i=0; i<childrenResults.size(); i++) {  // DEBUG loop
+			System.out.print("["+childrenResults.get(i)+"]");
+		}
+		
 		// return result
-		if(currentDepth%2==0) 
+		if(currentDepth%2==0) {
+			System.out.println("-->[max]="+maxResult.score);
 			return maxResult;
-		else
+		}
+		else {
+			System.out.println("-->[min]="+minResult.score);
 			return minResult;
+		}
 	}
 	
 	
@@ -843,19 +858,15 @@ public class World
 		}
 		return;
 	}
+	
+	
 
 	// get the available moves based on the current board, and the current player
-	public void getAvailableMoves(int mycolor, int currentDepth) {
-		if (currentDepth%2 == 0)
-			if(this.myColor == 0)
-				whiteMoves();
-			else
-				blackMoves();
-		else // currentDepth%2==1
-			if(this.myColor == 0)
-				blackMoves();
-			else
-				whiteMoves();
+	public void getAvailableMoves(int playerColor) {
+		if(playerColor == 1)
+			blackMoves();
+		else
+			whiteMoves();
 	}
 
 	// takes two boards as an argument, and compares the point difference between the two
