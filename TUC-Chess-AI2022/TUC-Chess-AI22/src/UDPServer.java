@@ -74,7 +74,7 @@ public class UDPServer
 			
 			// waiting for a message from the first player
 			serverSocket.receive(receivePacket);
-			nameWhite = new String(receivePacket.getData(), 0, receivePacket.getLength(), "UTF-8");
+			nameWhite = "white";  //new String(receivePacket.getData(), 0, receivePacket.getLength(), "UTF-8");
 			IPWhite = receivePacket.getAddress();
 			PORTWhite = receivePacket.getPort();
 			counterMsg++;
@@ -94,7 +94,7 @@ public class UDPServer
 			
 			// waiting for a message from the second player
 			serverSocket.receive(receivePacket);
-			nameBlack = new String(receivePacket.getData(), 0, receivePacket.getLength(), "UTF-8");
+			nameBlack = "black"; // new String(receivePacket.getData(), 0, receivePacket.getLength(), "UTF-8");
 			IPBlack = receivePacket.getAddress();
 			PORTBlack = receivePacket.getPort();
 			counterMsg++;

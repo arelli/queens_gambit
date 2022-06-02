@@ -23,7 +23,7 @@ public class World
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 4;
+	public int maxDepth = 7;
 	
 	public World()
 	{
@@ -665,7 +665,7 @@ public class World
 		//tempBoard = saveBoard();
     	//view_board();
 		
-		SearchResult result = findMinMax(saveBoard(), 0);		
+		SearchResult result = findMinMax(0,0);		
 
 		String nextMove = result.move;
 			
@@ -675,12 +675,12 @@ public class World
 	}
 	
 	// returns the max profit subtree, and the move leading to it
-	private SearchResult findMinMax(String[][] initialBoard, int currentDepth)
+	private SearchResult findMinMax(int currentDepth, int previousScore)
 	{		
 		// initializations	
 		SearchResult result = new SearchResult(),tempResult = new SearchResult(),maxResult = new SearchResult(), minResult = new SearchResult();
-		int negativeInfinity = -50000, positiveInfinity = 50000;
-		maxResult.score = negativeInfinity; minResult.score= positiveInfinity;
+		maxResult.score = -50000; minResult.score= 50000;
+		int newScore;
 		
 		// store current state(score, board,player,availableMoves
 		int tempScore = this.player_score;
@@ -691,12 +691,7 @@ public class World
 		
 		// if we are at leaf or max depth
 		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
-			result.score = getPoints(initialBoard,this.board, this.myColor);  // calculate how good or bad the current state of the game si
-			if(true) {
-				System.out.println("Points calculated:          " + result.score);
-				view_board();	
-				}
-			
+			result.score = previousScore;  //getPoints(this.board, this.myColor);  // calculate how good or bad the current state of the game is			
 			return result;			
 		}	
 		 
@@ -722,10 +717,19 @@ public class World
 		// for each available move(children)
 		for (int i=0; i<this.availableMoves.size(); i++) {
 			// makeMove()						
-			update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
+			newScore = update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
 			
-			tempResult = findMinMax(initialBoard, currentDepth+1);  // this only contains a score!
+			// get the move before the findMinMax makes any changes to the availableMoves[] arraylist!
 			tempResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
+						
+			if(currentDepth%2==0) {
+				tempResult.score = findMinMax(currentDepth+1, previousScore+newScore).score;  // my player's score is added
+			}
+			else {
+				tempResult.score = findMinMax(currentDepth+1, previousScore-newScore).score;  // the enemy players score is subtracted
+			}
+					
+
 			
 			if(currentDepth%2==0) {
 				if(tempResult.score>maxResult.score)
@@ -905,7 +909,7 @@ public class World
 	}
 
 	// takes two boards as an argument, and compares the point difference between the two
- 	public int getPoints(String[][] initialBoard, String[][] currentBoard, int player) {
+ 	public int getPoints(String[][] currentBoard, int player) {
 		//player is 0 for white, and 1 for black. It can be taken  by this.myColor
 		int currentPoints =0;
 		String myK,myR,myP,enemyK,enemyR,enemyP;
