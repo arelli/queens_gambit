@@ -1,32 +1,35 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
-import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 
 public class World
 {
-	public String[][] board = null;
-	public String[][] cur_board = null;
-	private int rows = 7;
-	private int columns = 5;
-	private int myColor = 0;
-	private ArrayList<String> availableMoves = null;
-	private int rookBlocks = 3;		// rook can move towards <rookBlocks> blocks in any vertical or horizontal direction
-	private int nTurns = 0;
-	private int nBranches = 0;
-	private int noPrize = 9;
+	String[][] board = null;
+	String[][] cur_board = null;
+	int rows = 7;
+	int columns = 5;
+	int myColor = 0;
+	ArrayList<String> availableMoves = null;
+	int rookBlocks = 3;		// rook can move towards <rookBlocks> blocks in any vertical or horizontal direction
+	int nTurns = 0;
+	int nBranches = 0;
+	int noPrize = 9;
 	
 	public int player_score;
 	public boolean king_down_flag = false;
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 9;
+	public int maxDepth;
+	
+	MinMaxPlayer whitePlayer , blackPlayer; 
 	
 	public World()
 	{
+		//Initialize the AI players
+		whitePlayer = new MinMaxPlayer();  // payer 0 and max depth of recursion 8
+		blackPlayer = new MinMaxPlayer();
+		
 		board = new String[rows][columns];
 		
 		/* represent the board
@@ -90,9 +93,8 @@ public class World
 	{
 		this.myColor = myColor;
 	}
-
 	
-	private void whiteMoves()
+	void whiteMoves()
 
 	{
 		String firstLetter = "";
@@ -116,14 +118,15 @@ public class World
 				{
 					
 					// check if it can move one vertical position ahead
-					firstLetter = Character.toString(board[i-1][j].charAt(0));
-					
-					if(firstLetter.equals(" ") || firstLetter.equals("P"))
-					{
-						move = Integer.toString(i) + Integer.toString(j) + 
-							   Integer.toString(i-1) + Integer.toString(j);
-						
-						availableMoves.add(move);
+					if(i>0) {
+						firstLetter = Character.toString(board[i-1][j].charAt(0));
+						if(firstLetter.equals(" ") || firstLetter.equals("P"))
+						{
+							move = Integer.toString(i) + Integer.toString(j) + 
+								   Integer.toString(i-1) + Integer.toString(j);
+							
+							availableMoves.add(move);
+						}
 					}
 					
 					// check if it can move crosswise to the left
@@ -298,7 +301,7 @@ public class World
 		}
 	}
 	
-	private void blackMoves()
+	void blackMoves()
 	{
 		String firstLetter = "";
 		String secondLetter = "";
@@ -331,6 +334,7 @@ public class World
 							availableMoves.add(move);
 						}
 					}
+					
 					// check if it can move crosswise to the left
 					if(j!=0 && i!=rows-1)
 					{
@@ -507,111 +511,7 @@ public class World
 			}	
 		}
 	}
-	
-	// saves the current score at the class variable player_score
-	public int update_board(String move) {
-		if (move.length()!=4) {
-			System.out.println("Error update_board. Length(move) !=4");
-		}
-		// To see at the board and calculate points
-		String enemyK;
-		String enemyR;
-		String enemyP;
-		String playerP;
-		int playerScore=0;
 		
-		// Pawns removed at last/first row
-		boolean IsPawn = false;
-		
-//		int move_points = 0;
-		
-		// Set enemy players pawn
-		if (player==0) {
-			enemyK = "BK";
-			enemyR = "BR";
-			enemyP = "BP";
-			
-			playerP = "WP";
-		}else {
-			enemyK = "WK";
-			enemyR = "WR";
-			enemyP = "WP";
-			
-			playerP = "BP";
-		}
-		
-		//x -> rows
-		//y -> columns
-		// Set source
-		int s_x = Character.getNumericValue(move.charAt(0));
-		int s_y = Character.getNumericValue(move.charAt(1));
-		// Set destination
-		int d_x = Character.getNumericValue(move.charAt(2));
-		int d_y = Character.getNumericValue(move.charAt(3));
-		
-		// Check Coordinates
-		if (s_x < 0 || s_x > this.rows || s_y < 0 || s_y > this.columns) {
-			System.out.println("Error update_board. Invalid 'source' coordinates");
-		}
-		if (d_x < 0 || d_x > this.rows || d_y < 0 || d_y > this.columns) {
-			System.out.println("Error update_board. Invalid 'destination' coordinates");
-		}
-		
-		// To check if its pawn
-		if (this.board[s_x][s_y].equals(playerP)) {
-			IsPawn = true;
-		}
-		
-	
-		// Make move
-		// None there
-		if (this.board[d_x][d_y].equals(" ")) {
-			this.board[d_x][d_y] = this.board[s_x][s_y];
-			this.board[s_x][s_y] = " ";
-			
-//			return move_points;
-		} // Bonus point there
-		// TODO: Not sure if we take the points. Check probabilities. 
-		else if (this.board[d_x][d_y].equals("P")) {
-			this.board[d_x][d_y] = this.board[s_x][s_y];
-			this.board[s_x][s_y] = " ";
-			
-			playerScore = 1;
-//			return move_points;
-		} // Enemy pawn there
-		else if (this.board[d_x][d_y].equals(enemyP)) {
-			this.board[d_x][d_y] = this.board[s_x][s_y];
-			this.board[s_x][s_y] = " ";
-			
-			playerScore = 1;
-//			return move_points;
-		} // Enemy Rook there 
-		else if (this.board[d_x][d_y].equals(enemyR)) {
-			this.board[d_x][d_y] = this.board[s_x][s_y];
-			this.board[s_x][s_y] = " ";
-			
-			playerScore = 3;
-//			return move_points;
-		} // Enemy king there
-		else if (this.board[d_x][d_y].equals(enemyK)) {
-			this.board[d_x][d_y] = this.board[s_x][s_y];
-			this.board[s_x][s_y] = " ";
-			
-			this.king_down_flag = true;
-			playerScore = 8;
-//			return move_points;
-		}
-		
-		// TODO: Check if states such us pawn goes to last row 			
-		// Is pawn and is at last row then take point and remove
-		if (IsPawn && (d_x == 0 || d_x == this.rows-1)) {
-			playerScore ++;
-			this.board[d_x][d_y] = " ";
-		}
-		
-		return playerScore;
-	}
-	
 	public String selectAction()
 	{
 		availableMoves = new ArrayList<String>();
@@ -625,13 +525,13 @@ public class World
 		nTurns++;
 		nBranches += availableMoves.size();
 		
-		if(this.myColor ==0) {
-			System.out.println("I am a smart guy");
-			return this.selectRandomAction(); 
+		if(this.myColor ==1) {
+			whitePlayer.updateWorld(1, 10);
+			return whitePlayer.selectMinMax(this.board);
 		}
 		else {
-			System.out.println("I am a dumb guy");
-			return this.selectMinMax();
+			//blackPlayer.updateWorld(1,9);
+			return selectRandomAction();
 		}
 	}
 	
@@ -677,216 +577,5 @@ public class World
 			board[prizeX][prizeY] = "P";
 	}
 	
-	class SearchResult {
-		public int score;
-		public String move;
-	}
-	
-	// Returns the next move for the current player
-	private String selectMinMax() {
 
-		SearchResult result = findMinMax(0,0,-50000, 50000);		
-
-		String nextMove = result.move;
-			
-		System.out.println("Player " + this.myColor + " played " + nextMove + " with score " + result.score);
-		
-		return nextMove;
-	}
-	
-	// returns the max profit subtree, and the move leading to it
-	private SearchResult findMinMax(int currentDepth, int previousScore, int alpha, int beta)
-	{		
-		// initializations	
-		SearchResult result = new SearchResult(),tempResult = new SearchResult(),maxResult = new SearchResult(), minResult = new SearchResult();
-		maxResult.score = -50000; minResult.score= 50000;
-		int newScore;
-		
-		// store current state(score, board,player,availableMoves
-		String[][] tempBoard =  new String[this.rows][this.columns];
-		tempBoard = saveBoard();  // save the current board
-		ArrayList<String> tempAvailMoves =  saveAvailableMoves(); // this.availableMoves;
-		
-		// if we are at leaf or max depth
-		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
-			result.score = previousScore;  //getPoints(this.board, this.myColor);  // calculate how good or bad the current state of the game is			
-			return result;			
-		}	
-		 
-		// Find the "children" of the current node
-		this.availableMoves = new ArrayList<String>();  //empty the available moves list
-		int otherColor;
-		
-		if(currentDepth%2==0) {
-			getAvailableMoves(this.myColor);
-		}
-		else if(currentDepth%2==1){
-			if(this.myColor==1)
-				otherColor=0;
-			else
-				otherColor=1;
-			
-			getAvailableMoves(otherColor);
-		}			
-		
-		ArrayList<Integer> childrenResults = new ArrayList<Integer>();  // DEBUG
-		
-		// for each available move(children)
-		for (int i=0; i<this.availableMoves.size(); i++) {
-			// make a simulated move	
-			newScore = update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
-			
-			// get the move before the findMinMax() makes any changes to the availableMoves arraylist!
-			maxResult.move = minResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
-						
-			if(currentDepth%2==0) {
-				tempResult.score = findMinMax(currentDepth+1, previousScore+newScore, alpha, beta).score;  // my player's score is added
-				if(tempResult.score>maxResult.score)
-					maxResult.score=tempResult.score;
-				
-				childrenResults.add(maxResult.score);  // DEBUG
-				
-				//max evaluation between current score and alpha
-				alpha = Math.max(alpha, tempResult.score);
-			}
-			else {
-				tempResult.score = findMinMax(currentDepth+1, previousScore-newScore, alpha, beta).score;  // the enemy players score is subtracted
-				if(tempResult.score<minResult.score)
-					minResult.score=tempResult.score;
-				
-				childrenResults.add(minResult.score);  // DEBUG
-				
-				beta = Math.min(beta, tempResult.score);
-			}
-			
-			// alpha-beta pruning of the probability tree
-			if (beta<= alpha)
-				break;
-			
-			
-			
-			//restore old state(go to to previous node after trying one move)
-			setBoard(tempBoard);
-			setAvailableMoves(tempAvailMoves);//this.availableMoves = new ArrayList<String>(tempAvailMoves);
-		}
-		
-		for (int i=0; i<childrenResults.size(); i++) {  // DEBUG loop
-			System.out.print("["+childrenResults.get(i)+"]");
-		}
-		
-		// return result
-		if(currentDepth%2==0) {
-			System.out.println("-->[max]="+maxResult.score);
-			return maxResult;
-		}
-		else {
-			System.out.println("-->[min]="+minResult.score);
-			return minResult;
-		}
-	}		
-				
-
-	// print the board at the output
-	public void view_board(){
-		
-		String chessPart;
-
-		
-		System.out.println("Board at current state");
-		System.out.println("======================");
-		
-		for(int i=0; i<rows; i++)
-		{
-			for(int j=0; j<columns; j++)
-			{
-				chessPart = board[i][j];
-				
-				
-				if (chessPart.equals(" ")){
-					// Is Empty Space
-					System.out.print("--");
-				} else {
-					System.out.print(chessPart);
-					
-				}
-				
-				// Print Horizontal definers
-				if (j < columns-1) {
-					System.out.print("|");
-				}
-			}
-			// New line
-			System.out.println("");
-		}
-		
-	}
-	
-		
-	// save the current this.board to a temporary string
-	public String[][] saveBoard() {
-		String[][] tempString = new String[this.rows][this.columns];
-		for(int i = 0; i<this.rows; i++) {
-			for (int k =0; k<this.columns; k++)
-				tempString[i][k] = this.board[i][k];
-		}
-		return tempString;
-	}
-	
-	
-	// set the current this.board to a temporary string
-	public void setBoard(String[][] newBoard) {
-		for(int i = 0; i<this.rows; i++) {
-			for (int k =0; k<this.columns; k++)
-				this.board[i][k] = newBoard[i][k];
-		}
-		return;
-	}
-		
-
-	// get the available moves based on the current board, and the current player
-	public void getAvailableMoves(int playerColor) {
-		if(playerColor == 1)
-			blackMoves();
-		else
-			whiteMoves();
-	}
-
-	// takes two boards as an argument, and compares the point difference between the two
-
-	public ArrayList<String> saveAvailableMoves(){
-		ArrayList<String> tempArrayList = new ArrayList<String>();
-		for (int k =0; k < this.availableMoves.size(); k++)
-			tempArrayList.add(this.availableMoves.get(k));
-		
-		return tempArrayList;
-	}
-	
-	public void setAvailableMoves(ArrayList<String> tempArrayList) {
-		this.availableMoves.clear();
-		for (int k =0; k<tempArrayList.size(); k++)
-			this.availableMoves.add(tempArrayList.get(k));
-		return;
-	}
-
-	public boolean gameHasEnded() {
-		boolean hasOtherPawns = false;
-		int howManyKings = 0;
-		
-		for(int row = 0; row<this.rows;row++) {
-			for(int col = 0; col<this.columns;col++) {
-				// check if its a (any color) king
-				if (this.board[row][col].equals("WK")  || this.board[row][col].equals("BK") ) {
-					howManyKings++;
-				}  // check if its a (any color) pawn(WP,BP)
-				else if(!this.board[row][col].equals("P") && !this.board[row][col].equals(" ")) {
-					hasOtherPawns = true;
-				}
-			}
-		}
-		// essentially means "if its a draw or somebody already won"
-		if ((howManyKings==2 && !hasOtherPawns)||(howManyKings==1))
-			return true;  // its a draw
-
-		return false;
-	}
 }
