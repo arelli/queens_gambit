@@ -700,7 +700,8 @@ public class World
 		int tempScore = this.player_score;
 		String[][] tempBoard =  new String[this.rows][this.columns];
 		tempBoard = saveBoard();  // save the current board
-		ArrayList<String> tempAvailMoves = this.availableMoves; 
+		ArrayList<String> tempAvailMoves =  saveAvailableMoves(); // this.availableMoves;
+		
 		
 		
 		// if we are at leaf or max depth
@@ -751,7 +752,7 @@ public class World
 			
 			//restore old state(go to to previous node after trying one move)
 			setBoard(tempBoard);
-			this.availableMoves = new ArrayList<String>(tempAvailMoves);
+			setAvailableMoves(tempAvailMoves);//this.availableMoves = new ArrayList<String>(tempAvailMoves);
 			this.player_score = tempScore;
 		}
 		
@@ -877,7 +878,7 @@ public class World
 	
 	public void setAvailableMoves(ArrayList<String> tempArrayList) {
 		this.availableMoves.clear();
-		for (int k =0; k<this.columns; k++)
+		for (int k =0; k<tempArrayList.size(); k++)
 			this.availableMoves.add(tempArrayList.get(k));
 		return;
 	}
