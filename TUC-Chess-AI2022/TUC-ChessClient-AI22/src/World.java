@@ -23,7 +23,7 @@ public class World
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 6;
+	public int maxDepth = 8;
 	
 	public World()
 	{
@@ -627,11 +627,11 @@ public class World
 		
 		if(this.myColor ==0) {
 			System.out.println("I am a smart guy");
-			return this.selectMinMax(); 
+			return this.selectRandomAction(); 
 		}
 		else {
 			System.out.println("I am a dumb guy");
-			return this.selectRandomAction();
+			return this.selectMinMax();
 		}
 	}
 	
@@ -675,15 +675,12 @@ public class World
 
 	// Returns the next move for the current player
 	private String selectMinMax() {
-		//String[][] tempBoard =  new String[this.rows][this.columns];
-		//tempBoard = saveBoard();
-    	//view_board();
-		
+
 		SearchResult result = findMinMax(0,0);		
 
 		String nextMove = result.move;
 			
-		System.out.println("Player " + this.player + " played " + nextMove + " with weight " + result.score);
+		System.out.println("Player " + this.myColor + " played " + nextMove + " with score " + result.score);
 		
 		return nextMove;
 	}
