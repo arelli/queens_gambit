@@ -23,7 +23,7 @@ public class World
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 8;
+	public int maxDepth = 9;
 	
 	public World()
 	{
@@ -644,39 +644,48 @@ public class World
 		return availableMoves.get(x);
 	}
 	
+	public double getAvgBFactor()
+	{
+		return nBranches / (double) nTurns;
+	}
+	
+	
+	public void makeMove(int x1, int y1, int x2, int y2, int prizeX, int prizeY)
+	{
+		String chesspart = Character.toString(board[x1][y1].charAt(1));
+		
+		boolean pawnLastRow = false;
+		
+		// check if it is a move that has made a move to the last line
+		if(chesspart.equals("P"))
+			if( (x1==rows-2 && x2==rows-1) || (x1==1 && x2==0) )
+			{
+				board[x2][y2] = " ";	// in a case an opponent's chess part has just been captured
+				board[x1][y1] = " ";
+				pawnLastRow = true;
+			}
+		
+		// otherwise
+		if(!pawnLastRow)
+		{
+			board[x2][y2] = board[x1][y1];
+			board[x1][y1] = " ";
+		}
+		
+		// check if a prize has been added in the game
+		if(prizeX != noPrize)
+			board[prizeX][prizeY] = "P";
+	}
 	
 	class SearchResult {
 		public int score;
 		public String move;
 	}
 	
-	
-	public boolean gameHasEnded() {
-		boolean hasOtherPawns = false;
-		int howManyKings = 0;
-		
-		for(int row = 0; row<this.rows;row++) {
-			for(int col = 0; col<this.columns;col++) {
-				// check if its a (any color) king
-				if (this.board[row][col].equals("WK")  || this.board[row][col].equals("BK") ) {
-					howManyKings++;
-				}  // check if its a (any color) pawn(WP,BP)
-				else if(!this.board[row][col].equals("P") && !this.board[row][col].equals(" ")) {
-					hasOtherPawns = true;
-				}
-			}
-		}
-		// essentially means "if its a draw or somebody already won"
-		if ((howManyKings==2 && !hasOtherPawns)||(howManyKings==1))
-			return true;  // its a draw
-
-		return false;
-	}
-
 	// Returns the next move for the current player
 	private String selectMinMax() {
 
-		SearchResult result = findMinMax(0,0);		
+		SearchResult result = findMinMax(0,0,-50000, 50000);		
 
 		String nextMove = result.move;
 			
@@ -686,7 +695,7 @@ public class World
 	}
 	
 	// returns the max profit subtree, and the move leading to it
-	private SearchResult findMinMax(int currentDepth, int previousScore)
+	private SearchResult findMinMax(int currentDepth, int previousScore, int alpha, int beta)
 	{		
 		// initializations	
 		SearchResult result = new SearchResult(),tempResult = new SearchResult(),maxResult = new SearchResult(), minResult = new SearchResult();
@@ -697,8 +706,6 @@ public class World
 		String[][] tempBoard =  new String[this.rows][this.columns];
 		tempBoard = saveBoard();  // save the current board
 		ArrayList<String> tempAvailMoves =  saveAvailableMoves(); // this.availableMoves;
-		
-		
 		
 		// if we are at leaf or max depth
 		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
@@ -733,17 +740,28 @@ public class World
 			maxResult.move = minResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
 						
 			if(currentDepth%2==0) {
-				tempResult.score = findMinMax(currentDepth+1, previousScore+newScore).score;  // my player's score is added
+				tempResult.score = findMinMax(currentDepth+1, previousScore+newScore, alpha, beta).score;  // my player's score is added
 				if(tempResult.score>maxResult.score)
 					maxResult.score=tempResult.score;
+				
 				childrenResults.add(maxResult.score);  // DEBUG
+				
+				//max evaluation between current score and alpha
+				alpha = Math.max(alpha, tempResult.score);
 			}
 			else {
-				tempResult.score = findMinMax(currentDepth+1, previousScore-newScore).score;  // the enemy players score is subtracted
+				tempResult.score = findMinMax(currentDepth+1, previousScore-newScore, alpha, beta).score;  // the enemy players score is subtracted
 				if(tempResult.score<minResult.score)
 					minResult.score=tempResult.score;
+				
 				childrenResults.add(minResult.score);  // DEBUG
+				
+				beta = Math.min(beta, tempResult.score);
 			}
+			
+			// alpha-beta pruning of the probability tree
+			if (beta<= alpha)
+				break;
 			
 			
 			
@@ -765,43 +783,9 @@ public class World
 			System.out.println("-->[min]="+minResult.score);
 			return minResult;
 		}
-	}
-	
-	
-	
+	}		
 				
-	public double getAvgBFactor()
-	{
-		return nBranches / (double) nTurns;
-	}
-	
-	public void makeMove(int x1, int y1, int x2, int y2, int prizeX, int prizeY)
-	{
-		String chesspart = Character.toString(board[x1][y1].charAt(1));
-		
-		boolean pawnLastRow = false;
-		
-		// check if it is a move that has made a move to the last line
-		if(chesspart.equals("P"))
-			if( (x1==rows-2 && x2==rows-1) || (x1==1 && x2==0) )
-			{
-				board[x2][y2] = " ";	// in a case an opponent's chess part has just been captured
-				board[x1][y1] = " ";
-				pawnLastRow = true;
-			}
-		
-		// otherwise
-		if(!pawnLastRow)
-		{
-			board[x2][y2] = board[x1][y1];
-			board[x1][y1] = " ";
-		}
-		
-		// check if a prize has been added in the game
-		if(prizeX != noPrize)
-			board[prizeX][prizeY] = "P";
-	}
-	
+
 	// print the board at the output
 	public void view_board(){
 		
@@ -836,6 +820,7 @@ public class World
 		}
 		
 	}
+	
 		
 	// save the current this.board to a temporary string
 	public String[][] saveBoard() {
@@ -847,6 +832,7 @@ public class World
 		return tempString;
 	}
 	
+	
 	// set the current this.board to a temporary string
 	public void setBoard(String[][] newBoard) {
 		for(int i = 0; i<this.rows; i++) {
@@ -855,8 +841,7 @@ public class World
 		}
 		return;
 	}
-	
-	
+		
 
 	// get the available moves based on the current board, and the current player
 	public void getAvailableMoves(int playerColor) {
@@ -881,5 +866,27 @@ public class World
 		for (int k =0; k<tempArrayList.size(); k++)
 			this.availableMoves.add(tempArrayList.get(k));
 		return;
+	}
+
+	public boolean gameHasEnded() {
+		boolean hasOtherPawns = false;
+		int howManyKings = 0;
+		
+		for(int row = 0; row<this.rows;row++) {
+			for(int col = 0; col<this.columns;col++) {
+				// check if its a (any color) king
+				if (this.board[row][col].equals("WK")  || this.board[row][col].equals("BK") ) {
+					howManyKings++;
+				}  // check if its a (any color) pawn(WP,BP)
+				else if(!this.board[row][col].equals("P") && !this.board[row][col].equals(" ")) {
+					hasOtherPawns = true;
+				}
+			}
+		}
+		// essentially means "if its a draw or somebody already won"
+		if ((howManyKings==2 && !hasOtherPawns)||(howManyKings==1))
+			return true;  // its a draw
+
+		return false;
 	}
 }
