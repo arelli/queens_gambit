@@ -92,7 +92,7 @@ public class Client
 				// no need to check for IPAddress and Port of sender, it must be the server of TUC-CHESS
 				receivedMsg = new String(receivePacket.getData(), 0, receivePacket.getLength(), "UTF-8");
 				
-				System.out.println("Received message from server PEOS: " + receivedMsg);
+				System.out.println("Received message from server: " + receivedMsg);
 				
 				// get the first letter of the String
 				String firstLetter = Character.toString(receivedMsg.charAt(0));

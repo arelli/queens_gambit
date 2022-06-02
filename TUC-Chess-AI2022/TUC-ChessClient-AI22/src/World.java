@@ -23,7 +23,7 @@ public class World
 	public int player;
 	
 	// the max depth of a minmax search
-	public int maxDepth = 7;
+	public int maxDepth = 6;
 	
 	public World()
 	{
@@ -652,10 +652,24 @@ public class World
 	
 	
 	public boolean gameHasEnded() {
-		// check if somebody won or there is a draw
-		//if(this.king_down_flag)
-		//	return true;
-		//TODO: fill it up
+		boolean hasOtherPawns = false;
+		int howManyKings = 0;
+		
+		for(int row = 0; row<this.rows;row++) {
+			for(int col = 0; col<this.columns;col++) {
+				// check how many kings are left in the board
+				if (this.board[row][col].equals("WK")  || this.board[row][col].equals("BK") ) {
+					howManyKings++;
+				}
+				else if(!this.board[row][col].equals("P") && !this.board[row][col].equals(" ")) {
+					hasOtherPawns = true;
+				}
+			}
+		}
+		
+		if ((howManyKings==2 && !hasOtherPawns)||(howManyKings==1))
+			return true;  // its a draw
+
 		return false;
 	}
 
@@ -696,23 +710,25 @@ public class World
 		}	
 		 
 		// Find the "children" of the current node
+		this.availableMoves = new ArrayList<String>();  //empty the available moves list
 		int otherColor;
-		if(currentDepth%2==0) 
+		if(currentDepth%2==0) { 
 			if(this.myColor==1)
 				otherColor=0;
 			else
 				otherColor=1;
-		else
-			if(this.myColor==1)
-				otherColor=1;
-			else
-				otherColor=0;
 			
-		this.availableMoves = new ArrayList<String>();
-		if(currentDepth%2==0) 
 			getAvailableMoves(this.myColor, currentDepth);
-		else
+		}
+		else {
+			if(this.myColor==1)
+				otherColor=1;
+			else
+				otherColor=0;
 			getAvailableMoves(otherColor, currentDepth);
+		}
+			
+			
 		
 		// for each available move(children)
 		for (int i=0; i<this.availableMoves.size(); i++) {
@@ -724,18 +740,11 @@ public class World
 						
 			if(currentDepth%2==0) {
 				tempResult.score = findMinMax(currentDepth+1, previousScore+newScore).score;  // my player's score is added
-			}
-			else {
-				tempResult.score = findMinMax(currentDepth+1, previousScore-newScore).score;  // the enemy players score is subtracted
-			}
-					
-
-			
-			if(currentDepth%2==0) {
 				if(tempResult.score>maxResult.score)
 					maxResult=tempResult;
 			}
 			else {
+				tempResult.score = findMinMax(currentDepth+1, previousScore-newScore).score;  // the enemy players score is subtracted
 				if(tempResult.score<minResult.score)
 					minResult=tempResult;
 			}
@@ -754,59 +763,7 @@ public class World
 	}
 	
 	
-	/*
-	// returns the min profit subtree, and the move leading to it
-	private SearchResult findMin(int currentDepth)
-	{		
-		// initializations
-		SearchResult result = new SearchResult();
-		ArrayList<SearchResult> childrenResults = new ArrayList<SearchResult>();
-		ArrayList<Integer> childrenScores = new ArrayList<Integer>();
-		System.out.println("[min]depth=" + currentDepth + ",current_score="+this.player_score );
-		
-		// store current state(score, board,player,availableMoves
-		int tempScore = this.player_score;
-		String[][] tempBoard = this.board;
-		int tempPlayer = this.player;
-		ArrayList<String> tempAvailMoves = this.availableMoves; 
-		
-		// if we are at leaf or max depth
-		if(currentDepth>=this.maxDepth  || gameHasEnded()) {  // TODO: or game has ended!
-			// return current score
-			result.score = this.player_score;
-			return result;			
-		}	
-		
-		// for each available move(children)
-		for (int i=0; i<this.availableMoves.size(); i++) {
-			System.out.println("Investigating action " + this.availableMoves.get(i) + " of " + this.availableMoves.size());
-			// makeMove()
-			update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
-			// blackMoves() or whiteMoves() depending on depth
-			if (currentDepth%2 == 0) blackMoves(); else whiteMoves();
-			// call selectMin(depth+1,) & store return values in a array
-			childrenResults.add(findMax(currentDepth+1));
-			
-			//restore old state(go to to previous node after trying one move)
-			this.player_score = tempScore;;
-			this.board = tempBoard;
-			this.player = tempPlayer;
-			this.availableMoves = new ArrayList<String>(tempAvailMoves); 
-		}
-		
-		
-		// find max(array) and put it into Result
-		for(int i=0; i<childrenResults.size(); i++) {
-			childrenScores.add(childrenResults.get(i).score);			
-		}
-		
-		result = childrenResults.get(childrenScores.indexOf(Collections.min(childrenScores)));
-		
-		// return result
-		return result;
-	}
 	
-	*/
 				
 	public double getAvgBFactor()
 	{
@@ -909,39 +866,19 @@ public class World
 	}
 
 	// takes two boards as an argument, and compares the point difference between the two
- 	public int getPoints(String[][] currentBoard, int player) {
-		//player is 0 for white, and 1 for black. It can be taken  by this.myColor
-		int currentPoints =0;
-		String myK,myR,myP,enemyK,enemyR,enemyP;
+
+	public ArrayList<String> saveAvailableMoves(){
+		ArrayList<String> tempArrayList = new ArrayList<String>();
+		for (int k =0; k < this.availableMoves.size(); k++)
+			tempArrayList.add(this.availableMoves.get(k));
 		
-		// Set enemy players pawn
-		if (player==0) {
-			enemyK = "BK";	enemyR = "BR";	enemyP = "BP";
-			myK = "WK";	myR = "WR";	myP = "WP";
-		}
-		else {
-			enemyK = "WK"; enemyR = "WR"; enemyP = "WP";
-			myK = "BK";	myR = "BR";	myP = "BP";
-		}
-		
-		for(int row = 0; row<this.rows;row++) {
-			for(int col = 0; col<this.columns;col++) {
-				//count final board "points"
-				if(currentBoard[row][col].equals(myK))
-					currentPoints+=8;
-				else if(currentBoard[row][col].equals(myR))
-					currentPoints+=3;
-				else if(currentBoard[row][col].equals(myP))
-					currentPoints+=1;		
-				
-				if(currentBoard[row][col].equals(enemyK))
-					currentPoints-=8;
-				else if(currentBoard[row][col].equals(enemyR))
-					currentPoints-=3;
-				else if(currentBoard[row][col].equals(enemyP))
-					currentPoints-=1;
-			}
-		}
-		return currentPoints;		
+		return tempArrayList;
+	}
+	
+	public void setAvailableMoves(ArrayList<String> tempArrayList) {
+		this.availableMoves.clear();
+		for (int k =0; k<this.columns; k++)
+			this.availableMoves.add(tempArrayList.get(k));
+		return;
 	}
 }
