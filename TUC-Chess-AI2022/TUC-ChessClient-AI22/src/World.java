@@ -657,16 +657,16 @@ public class World
 		
 		for(int row = 0; row<this.rows;row++) {
 			for(int col = 0; col<this.columns;col++) {
-				// check how many kings are left in the board
+				// check if its a (any color) king
 				if (this.board[row][col].equals("WK")  || this.board[row][col].equals("BK") ) {
 					howManyKings++;
-				}
+				}  // check if its a (any color) pawn(WP,BP)
 				else if(!this.board[row][col].equals("P") && !this.board[row][col].equals(" ")) {
 					hasOtherPawns = true;
 				}
 			}
 		}
-		
+		// essentially means "if its a draw or somebody already won"
 		if ((howManyKings==2 && !hasOtherPawns)||(howManyKings==1))
 			return true;  // its a draw
 
@@ -697,7 +697,6 @@ public class World
 		int newScore;
 		
 		// store current state(score, board,player,availableMoves
-		int tempScore = this.player_score;
 		String[][] tempBoard =  new String[this.rows][this.columns];
 		tempBoard = saveBoard();  // save the current board
 		ArrayList<String> tempAvailMoves =  saveAvailableMoves(); // this.availableMoves;
@@ -713,30 +712,24 @@ public class World
 		// Find the "children" of the current node
 		this.availableMoves = new ArrayList<String>();  //empty the available moves list
 		int otherColor;
-		if(currentDepth%2==0) { 
-			if(this.myColor==1)
-				otherColor=0;
-			else
-				otherColor=1;
-			
+		
+		if(currentDepth%2==0) {
 			getAvailableMoves(this.myColor, currentDepth);
 		}
-		else {
+		else if(currentDepth%2==1){
 			if(this.myColor==1)
 				otherColor=1;
 			else
 				otherColor=0;
 			getAvailableMoves(otherColor, currentDepth);
-		}
-			
-			
+		}			
 		
 		// for each available move(children)
 		for (int i=0; i<this.availableMoves.size(); i++) {
 			// makeMove()						
 			newScore = update_board(this.availableMoves.get(i));  // now the new score is updated on the class variable player_Score
 			
-			// get the move before the findMinMax makes any changes to the availableMoves[] arraylist!
+			// get the move before the findMinMax() makes any changes to the availableMoves arraylist!
 			tempResult.move = this.availableMoves.get(i);  // this is the move that lead to the terminal state
 						
 			if(currentDepth%2==0) {
@@ -753,7 +746,6 @@ public class World
 			//restore old state(go to to previous node after trying one move)
 			setBoard(tempBoard);
 			setAvailableMoves(tempAvailMoves);//this.availableMoves = new ArrayList<String>(tempAvailMoves);
-			this.player_score = tempScore;
 		}
 		
 		// return result
